@@ -1,3 +1,5 @@
+import { StoryboardSlide } from "@/lib/storyboard";
+
 export type UserRole = "admin" | "ops";
 
 export type RequestStatus =
@@ -44,6 +46,7 @@ export interface StoryboardRow {
   request_id: string;
   storage_path: string | null;
   pdf_url?: string | null;
+  slides?: StoryboardSlide[] | null;
   version: number;
   uploaded_by: string;
   created_at: string;

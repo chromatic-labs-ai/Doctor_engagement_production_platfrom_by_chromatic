@@ -6,6 +6,7 @@ import { AdminUploadForms } from "@/components/admin-upload-forms";
 import { CommentThread } from "@/components/comment-thread";
 import { JsonCopyPanel } from "@/components/json-copy-panel";
 import { PdfViewer } from "@/components/pdf-viewer";
+import { StoryboardSlideGallery } from "@/components/storyboard-slide-gallery";
 import { StatusBadge } from "@/components/status-badge";
 import { VideoPlayer } from "@/components/video-player";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { updateRequestStatusAction } from "@/lib/actions";
 import { STATUS_OPTIONS } from "@/lib/constants";
+import { StoryboardSlideWithUrl } from "@/lib/storyboard";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import {
@@ -53,7 +55,22 @@ export default async function AdminRequestDetailPage({
     .returns<StoryboardRow[]>();
 
   const latestStoryboard = storyboards?.[0] ?? null;
-  const latestStoryboardUrl = latestStoryboard?.storage_path
+  const hasSlideMetadata = (latestStoryboard?.slides?.length ?? 0) > 0;
+  const latestStoryboardSlides: StoryboardSlideWithUrl[] = [];
+  for (const slide of [...(latestStoryboard?.slides ?? [])].sort((a, b) => a.order - b.order)) {
+    const { data } = await supabase.storage
+      .from("storyboards")
+      .createSignedUrl(slide.path, 60 * 60 * 24);
+    if (data?.signedUrl) {
+      latestStoryboardSlides.push({
+        ...slide,
+        url: data.signedUrl,
+      });
+    }
+  }
+
+  const latestStoryboardUrl =
+    !hasSlideMetadata && latestStoryboard?.storage_path
     ? (
         await supabase.storage
           .from("storyboards")
@@ -160,7 +177,7 @@ export default async function AdminRequestDetailPage({
           ) : null}
 
           {/* Storyboard Section */}
-          {latestStoryboard && latestStoryboardUrl ? (
+          {latestStoryboard && (hasSlideMetadata || latestStoryboardUrl) ? (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-base font-medium">
@@ -171,14 +188,25 @@ export default async function AdminRequestDetailPage({
                 </span>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
-                <PdfViewer url={latestStoryboardUrl} />
+                {latestStoryboardSlides.length > 0 ? (
+                  <StoryboardSlideGallery slides={latestStoryboardSlides} />
+                ) : hasSlideMetadata ? (
+                  <p className="text-sm text-muted-foreground">
+                    Storyboard slides could not be loaded right now.
+                  </p>
+                ) : latestStoryboardUrl ? (
+                  <PdfViewer url={latestStoryboardUrl} />
+                ) : null}
                 
                 <div className="rounded-lg border bg-muted/50 p-4">
                   <p className="text-sm font-medium">Version History</p>
                   <div className="mt-2 space-y-1">
                     {(storyboards ?? []).map((item) => (
                       <div key={item.id} className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">v{item.version}</span>
+                        <span className="text-muted-foreground">
+                          v{item.version}
+                          {item.slides?.length ? ` • ${item.slides.length} slides` : " • PDF"}
+                        </span>
                         <span className="text-xs text-muted-foreground">
                           {new Date(item.created_at).toLocaleString()}
                         </span>

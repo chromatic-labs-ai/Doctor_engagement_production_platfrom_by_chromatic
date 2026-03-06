@@ -6,6 +6,8 @@ import { REQUEST_FORM_FIELDS } from "@/config/request-form";
 import { CommentThread } from "@/components/comment-thread";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { PdfViewer } from "@/components/pdf-viewer";
+import { StoryboardReviewPanel } from "@/components/storyboard-review-panel";
+import { StoryboardSlideGallery } from "@/components/storyboard-slide-gallery";
 import { StatusBadge } from "@/components/status-badge";
 import { VideoPlayer } from "@/components/video-player";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,6 +23,7 @@ import {
   approveStoryboardAction,
   requestStoryboardRevisionAction,
 } from "@/lib/actions";
+import { StoryboardSlideWithUrl } from "@/lib/storyboard";
 import { SubmitButton } from "@/components/submit-button";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -65,7 +68,22 @@ export default async function OpsRequestDetailPage({
     .returns<StoryboardRow[]>();
 
   const latestStoryboard = storyboards?.[0] ?? null;
-  const latestStoryboardUrl = latestStoryboard?.storage_path
+  const hasSlideMetadata = (latestStoryboard?.slides?.length ?? 0) > 0;
+  const latestStoryboardSlides: StoryboardSlideWithUrl[] = [];
+  for (const slide of [...(latestStoryboard?.slides ?? [])].sort((a, b) => a.order - b.order)) {
+    const { data } = await supabase.storage
+      .from("storyboards")
+      .createSignedUrl(slide.path, 60 * 60 * 24);
+    if (data?.signedUrl) {
+      latestStoryboardSlides.push({
+        ...slide,
+        url: data.signedUrl,
+      });
+    }
+  }
+
+  const latestStoryboardUrl =
+    !hasSlideMetadata && latestStoryboard?.storage_path
     ? (
         await supabase.storage
           .from("storyboards")
@@ -130,6 +148,8 @@ export default async function OpsRequestDetailPage({
   const canRequestRevision =
     request.status === "storyboard_review" &&
     request.storyboard_revision_count < request.max_storyboard_revisions;
+  const hasRenderableSlides = latestStoryboardSlides.length > 0;
+  const hasSlideStoryboard = hasSlideMetadata;
 
   return (
     <div className="flex flex-col gap-6">
@@ -169,7 +189,7 @@ export default async function OpsRequestDetailPage({
           ) : null}
 
           {/* Storyboard Section */}
-          {latestStoryboard && latestStoryboardUrl ? (
+          {latestStoryboard && (hasSlideStoryboard || latestStoryboardUrl) ? (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-base font-medium">
@@ -180,7 +200,23 @@ export default async function OpsRequestDetailPage({
                 </span>
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
-                <PdfViewer url={latestStoryboardUrl} />
+                {hasSlideStoryboard ? (
+                  hasRenderableSlides ? request.status === "storyboard_review" ? (
+                    <StoryboardReviewPanel
+                      requestId={request.id}
+                      slides={latestStoryboardSlides}
+                      canRequestRevision={canRequestRevision}
+                    />
+                  ) : (
+                    <StoryboardSlideGallery slides={latestStoryboardSlides} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Storyboard slides could not be loaded right now.
+                    </p>
+                  )
+                ) : latestStoryboardUrl ? (
+                  <PdfViewer url={latestStoryboardUrl} />
+                ) : null}
                 <div className="flex items-center justify-between rounded-lg border bg-muted/50 px-4 py-2 text-sm text-muted-foreground">
                   <span>Revisions used</span>
                   <span className="font-medium text-foreground">
@@ -209,9 +245,9 @@ export default async function OpsRequestDetailPage({
           <CommentThread
             requestId={request.id}
             comments={comments ?? []}
-            canComment={canComment}
+            canComment={canComment && !hasSlideStoryboard}
             actions={
-              request.status === "storyboard_review" ? (
+              request.status === "storyboard_review" && !hasSlideStoryboard ? (
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm font-medium">Finalise your review</p>
