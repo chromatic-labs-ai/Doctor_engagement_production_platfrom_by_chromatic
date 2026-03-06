@@ -18,6 +18,7 @@ import {
 import { updateRequestStatusAction } from "@/lib/actions";
 import { STATUS_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
+import { SubmitButton } from "@/components/submit-button";
 import {
   JsonRecord,
   RequestRow,
@@ -133,9 +134,9 @@ export default async function AdminRequestDetailPage({
                 </option>
               ))}
             </select>
-            <Button type="submit" size="sm">
+            <SubmitButton type="submit" size="sm">
               Update
-            </Button>
+            </SubmitButton>
           </form>
         </div>
       </div>
