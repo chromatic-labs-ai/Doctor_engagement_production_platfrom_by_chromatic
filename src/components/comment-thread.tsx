@@ -1,5 +1,6 @@
+import { ReactNode } from "react";
 import { addCommentAction } from "@/lib/actions";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import {
   Card,
   CardContent,
@@ -25,6 +26,7 @@ interface CommentThreadProps {
   requestId: string;
   comments: CommentItem[];
   canComment?: boolean;
+  actions?: ReactNode;
 }
 
 function getInitials(name: string | null | undefined, email: string | null | undefined) {
@@ -43,6 +45,7 @@ export function CommentThread({
   requestId,
   comments,
   canComment = false,
+  actions,
 }: CommentThreadProps) {
   return (
     <Card>
@@ -88,10 +91,17 @@ export function CommentThread({
                 rows={3}
                 placeholder="Write your feedback or requested changes..."
               />
-              <Button type="submit" size="sm">
+              <SubmitButton type="submit" size="sm">
                 Post Comment
-              </Button>
+              </SubmitButton>
             </form>
+          </>
+        ) : null}
+
+        {actions ? (
+          <>
+            <Separator />
+            {actions}
           </>
         ) : null}
       </CardContent>

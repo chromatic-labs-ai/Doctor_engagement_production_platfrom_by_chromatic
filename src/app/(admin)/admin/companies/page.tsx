@@ -1,6 +1,6 @@
 import { createCompanyWithOpsAction } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/submit-button";
 import {
   Card,
   CardContent,
@@ -84,7 +84,7 @@ export default async function AdminCompaniesPage() {
               />
             </div>
             <div className="md:col-span-2">
-              <Button type="submit">Create Company</Button>
+              <SubmitButton type="submit">Create Company</SubmitButton>
             </div>
           </form>
         </CardContent>

@@ -4,6 +4,7 @@ import { ArrowLeftIcon, AlertTriangleIcon, FileTextIcon, VideoIcon } from "lucid
 
 import { REQUEST_FORM_FIELDS } from "@/config/request-form";
 import { CommentThread } from "@/components/comment-thread";
+import { PhotoLightbox } from "@/components/photo-lightbox";
 import { PdfViewer } from "@/components/pdf-viewer";
 import { StatusBadge } from "@/components/status-badge";
 import { VideoPlayer } from "@/components/video-player";
@@ -20,6 +21,7 @@ import {
   approveStoryboardAction,
   requestStoryboardRevisionAction,
 } from "@/lib/actions";
+import { SubmitButton } from "@/components/submit-button";
 import { createClient } from "@/lib/supabase/server";
 import {
   RequestRow,
@@ -179,39 +181,12 @@ export default async function OpsRequestDetailPage({
               </CardHeader>
               <CardContent className="space-y-4 pt-4">
                 <PdfViewer url={latestStoryboardUrl} />
-
-                <div className="flex flex-col gap-4 rounded-lg border bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="text-sm text-muted-foreground">
-                    Revisions used: <span className="font-medium text-foreground">{request.storyboard_revision_count}</span> / {request.max_storyboard_revisions}
-                  </div>
-                  <div className="flex gap-2">
-                    {request.status === "storyboard_review" ? (
-                      <form action={approveStoryboardAction}>
-                        <input type="hidden" name="request_id" value={request.id} />
-                        <Button type="submit" size="sm">
-                          Approve
-                        </Button>
-                      </form>
-                    ) : null}
-                    {canRequestRevision ? (
-                      <form action={requestStoryboardRevisionAction}>
-                        <input type="hidden" name="request_id" value={request.id} />
-                        <Button type="submit" variant="secondary" size="sm">
-                          Request Revision
-                        </Button>
-                      </form>
-                    ) : null}
-                  </div>
+                <div className="flex items-center justify-between rounded-lg border bg-muted/50 px-4 py-2 text-sm text-muted-foreground">
+                  <span>Revisions used</span>
+                  <span className="font-medium text-foreground">
+                    {request.storyboard_revision_count} / {request.max_storyboard_revisions}
+                  </span>
                 </div>
-
-                {!canRequestRevision && request.status === "storyboard_review" ? (
-                  <Alert variant="destructive">
-                    <AlertTriangleIcon className="size-4" />
-                    <AlertDescription>
-                      Revision limit reached. Please contact support if you need more changes.
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
               </CardContent>
             </Card>
           ) : (
@@ -230,11 +205,57 @@ export default async function OpsRequestDetailPage({
             )
           )}
 
-          {/* Comments Section */}
+          {/* Comments + Review Actions */}
           <CommentThread
             requestId={request.id}
             comments={comments ?? []}
             canComment={canComment}
+            actions={
+              request.status === "storyboard_review" ? (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium">Finalise your review</p>
+                    <p className="text-xs text-muted-foreground">
+                      Approve the storyboard to proceed, or leave a comment explaining what needs to change and then request a revision.
+                    </p>
+                  </div>
+                  {!canRequestRevision ? (
+                    <Alert variant="destructive">
+                      <AlertTriangleIcon className="size-4" />
+                      <AlertDescription>
+                        Revision limit reached. You can only approve at this stage.
+                      </AlertDescription>
+                    </Alert>
+                  ) : null}
+                  <div className="flex gap-2">
+                    {canRequestRevision ? (
+                      <form action={requestStoryboardRevisionAction}>
+                        <input type="hidden" name="request_id" value={request.id} />
+                        <SubmitButton
+                          type="submit"
+                          variant="secondary"
+                          size="sm"
+                          disabled={(comments ?? []).length === 0}
+                          title={
+                            (comments ?? []).length === 0
+                              ? "Please add a comment explaining what needs to change before requesting a revision."
+                              : undefined
+                          }
+                        >
+                          Request Revision
+                        </SubmitButton>
+                      </form>
+                    ) : null}
+                    <form action={approveStoryboardAction}>
+                      <input type="hidden" name="request_id" value={request.id} />
+                      <SubmitButton type="submit" size="sm">
+                        Approve Storyboard
+                      </SubmitButton>
+                    </form>
+                  </div>
+                </div>
+              ) : null
+            }
           />
         </div>
 
@@ -267,32 +288,20 @@ export default async function OpsRequestDetailPage({
               {youngPhotoUrl || currentPhotoUrl ? (
                 <>
                   <Separator />
-                  <div className="grid gap-2">
+                  <div className="grid gap-3">
                     <span className="text-xs font-medium text-muted-foreground">
                       Reference Photos
                     </span>
-                    <div className="flex flex-col gap-1">
-                      {youngPhotoUrl ? (
-                        <a
-                          href={youngPhotoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="truncate text-primary underline underline-offset-4 hover:text-primary/80"
-                        >
-                          Younger Photo
-                        </a>
-                      ) : null}
-                      {currentPhotoUrl ? (
-                        <a
-                          href={currentPhotoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="truncate text-primary underline underline-offset-4 hover:text-primary/80"
-                        >
-                          Current / Recent Photo
-                        </a>
-                      ) : null}
-                    </div>
+                    <PhotoLightbox
+                      photos={[
+                        ...(youngPhotoUrl
+                          ? [{ url: youngPhotoUrl, label: "Younger Photo" }]
+                          : []),
+                        ...(currentPhotoUrl
+                          ? [{ url: currentPhotoUrl, label: "Current Photo" }]
+                          : []),
+                      ]}
+                    />
                   </div>
                 </>
               ) : null}

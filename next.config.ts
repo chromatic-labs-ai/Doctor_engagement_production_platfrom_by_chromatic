@@ -6,7 +6,15 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "10mb",
     },
   },
-  // Force restart
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "szwczlgnbhcuprnxscle.supabase.co",
+        pathname: "/storage/v1/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
