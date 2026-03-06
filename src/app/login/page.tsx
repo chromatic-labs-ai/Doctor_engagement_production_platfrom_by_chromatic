@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { GalleryVerticalEnd } from "lucide-react";
 
 import { LoginForm } from "@/components/login-form";
@@ -21,14 +20,17 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-      <div className="relative hidden bg-muted lg:block">
-        <Image
-          src="/placeholder.svg"
-          alt="Image"
-          fill
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-          priority
-        />
+      <div className="relative hidden lg:flex flex-col items-center justify-center bg-black px-16 text-white">
+        <div className="max-w-sm space-y-6">
+          <div className="h-px w-12 bg-white/30" />
+          <blockquote className="text-3xl font-black leading-snug tracking-tight">
+            "From script to screen — every doctor's story, told right."
+          </blockquote>
+          <p className="text-sm font-medium text-white/60 leading-relaxed">
+            A platform built for pharma teams who care about quality, compliance, and getting it done on time.
+          </p>
+          <div className="h-px w-12 bg-white/30" />
+        </div>
       </div>
     </div>
   );
