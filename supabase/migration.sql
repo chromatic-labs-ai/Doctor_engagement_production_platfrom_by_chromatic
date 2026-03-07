@@ -106,6 +106,7 @@ alter table requests add constraint requests_revision_limits_check check (
 );
 
 alter table storyboards add column if not exists storage_path text;
+alter table storyboards add column if not exists slides jsonb;
 alter table videos add column if not exists storage_path text;
 
 create index if not exists idx_requests_company_id on requests(company_id);

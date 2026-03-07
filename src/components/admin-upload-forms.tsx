@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { UploadIcon, AlertCircleIcon } from "lucide-react";
 
 import { uploadStoryboardAction, uploadVideoAction } from "@/lib/actions";
@@ -25,6 +26,9 @@ interface SignedUrlResponse {
 
 export function AdminUploadForms({ requestId }: { requestId: string }) {
   const supabase = createClient();
+  const router = useRouter();
+  const storyboardInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   const [storyboardPending, startStoryboard] = useTransition();
   const [videoPending, startVideo] = useTransition();
   const [storyboardError, setStoryboardError] = useState("");
@@ -67,17 +71,19 @@ export function AdminUploadForms({ requestId }: { requestId: string }) {
           <CardTitle className="flex items-center gap-2 text-base">
             <UploadIcon className="size-4" /> Upload Storyboard
           </CardTitle>
-          <CardDescription>Upload a PDF storyboard for client review.</CardDescription>
+          <CardDescription>
+            Upload a ZIP exported from storyboard maker with one slide image per shot.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form
             onSubmit={(event) => {
               event.preventDefault();
               setStoryboardError("");
-              const input = event.currentTarget.elements.namedItem("pdf") as HTMLInputElement;
+              const input = event.currentTarget.elements.namedItem("storyboard") as HTMLInputElement;
               const file = input.files?.[0];
               if (!file) {
-                setStoryboardError("Please select a PDF.");
+                setStoryboardError("Please select a storyboard ZIP.");
                 return;
               }
               startStoryboard(async () => {
@@ -86,7 +92,15 @@ export function AdminUploadForms({ requestId }: { requestId: string }) {
                   const payload = new FormData();
                   payload.set("request_id", requestId);
                   payload.set("storage_path", storagePath);
-                  await uploadStoryboardAction(payload);
+                  payload.set("file_name", file.name);
+                  const result = await uploadStoryboardAction(payload);
+                  if (result?.error) {
+                    throw new Error(result.error);
+                  }
+                  if (storyboardInputRef.current) {
+                    storyboardInputRef.current.value = "";
+                  }
+                  router.refresh();
                 } catch (err) {
                   setStoryboardError(
                     err instanceof Error ? err.message : "Storyboard upload failed.",
@@ -97,11 +111,18 @@ export function AdminUploadForms({ requestId }: { requestId: string }) {
             className="space-y-3"
           >
             <div className="space-y-2">
-              <Label htmlFor="pdf">PDF File</Label>
-              <Input id="pdf" type="file" name="pdf" accept="application/pdf" required />
+              <Label htmlFor="storyboard">Storyboard ZIP</Label>
+              <Input
+                ref={storyboardInputRef}
+                id="storyboard"
+                type="file"
+                name="storyboard"
+                accept=".zip,application/zip"
+                required
+              />
             </div>
             <Button type="submit" disabled={storyboardPending} size="sm" className="w-full">
-              {storyboardPending ? "Uploading..." : "Upload PDF"}
+              {storyboardPending ? "Uploading..." : "Upload ZIP"}
             </Button>
             {storyboardError ? (
               <Alert variant="destructive">
@@ -137,7 +158,14 @@ export function AdminUploadForms({ requestId }: { requestId: string }) {
                   const payload = new FormData();
                   payload.set("request_id", requestId);
                   payload.set("storage_path", storagePath);
-                  await uploadVideoAction(payload);
+                  const result = await uploadVideoAction(payload);
+                  if (result?.error) {
+                    throw new Error(result.error);
+                  }
+                  if (videoInputRef.current) {
+                    videoInputRef.current.value = "";
+                  }
+                  router.refresh();
                 } catch (err) {
                   setVideoError(err instanceof Error ? err.message : "Video upload failed.");
                 }
@@ -147,7 +175,14 @@ export function AdminUploadForms({ requestId }: { requestId: string }) {
           >
             <div className="space-y-2">
               <Label htmlFor="video">Video File</Label>
-              <Input id="video" type="file" name="video" accept="video/*" required />
+              <Input
+                ref={videoInputRef}
+                id="video"
+                type="file"
+                name="video"
+                accept="video/*"
+                required
+              />
             </div>
             <Button type="submit" disabled={videoPending} size="sm" className="w-full">
               {videoPending ? "Uploading..." : "Upload Video"}
