@@ -183,7 +183,8 @@ export default async function AdminCompaniesPage() {
             {companies?.length ?? 0} companies registered on the platform.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -220,6 +221,7 @@ export default async function AdminCompaniesPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
