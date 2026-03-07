@@ -145,21 +145,21 @@ export default async function SupervisorRequestDetailPage({
   return (
     <div className="flex flex-col">
       <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur-sm md:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" asChild className="h-8 w-8 shrink-0">
               <Link href="/supervisor/dashboard">
                 <ArrowLeftIcon className="size-4" />
               </Link>
             </Button>
-            <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
-              <h1 className="text-lg font-semibold tracking-tight">
+            <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+              <h1 className="truncate text-lg font-semibold tracking-tight">
                 {request.doctor_name}
               </h1>
               <StatusBadge status={request.status} />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3 pl-11 md:pl-0">
             <span className="hidden font-mono text-xs text-muted-foreground sm:inline">
               {request.id.slice(0, 8)}
             </span>
