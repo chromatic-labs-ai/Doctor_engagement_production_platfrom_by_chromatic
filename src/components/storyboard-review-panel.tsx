@@ -1,23 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDownIcon } from "lucide-react";
 
-import {
-  getStoryboardIssueLabel,
-  STORYBOARD_ISSUES,
-  StoryboardIssue,
-  StoryboardSlideWithUrl,
-} from "@/lib/storyboard";
+import { StoryboardSlideWithUrl } from "@/lib/storyboard";
 import { useReviewState } from "@/components/review-context";
 import { StoryboardSlideGallery } from "@/components/storyboard-slide-gallery";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Textarea } from "@/components/ui/textarea";
 
 interface StoryboardReviewPanelProps {
   slides: StoryboardSlideWithUrl[];
@@ -26,18 +15,18 @@ interface StoryboardReviewPanelProps {
 export function StoryboardReviewPanel({
   slides,
 }: StoryboardReviewPanelProps) {
-  const [selectedByOrder, setSelectedByOrder] = useState<Record<number, StoryboardIssue[]>>({});
+  const [commentsByOrder, setCommentsByOrder] = useState<Record<number, string>>({});
   const review = useReviewState();
   const updateReview = review?.update;
 
   const hasSelections = useMemo(
-    () => Object.values(selectedByOrder).some((issues) => issues.length > 0),
-    [selectedByOrder],
+    () => Object.values(commentsByOrder).some((comment) => comment.trim().length > 0),
+    [commentsByOrder],
   );
 
   const selectedShotCount = useMemo(
-    () => Object.values(selectedByOrder).filter((issues) => issues.length > 0).length,
-    [selectedByOrder],
+    () => Object.values(commentsByOrder).filter((comment) => comment.trim().length > 0).length,
+    [commentsByOrder],
   );
 
   const selectionsJson = useMemo(
@@ -46,43 +35,30 @@ export function StoryboardReviewPanel({
         slides
           .map((slide) => ({
             order: slide.order,
-            issues: selectedByOrder[slide.order] ?? [],
+            comment: commentsByOrder[slide.order]?.trim() ?? "",
           }))
-          .filter((selection) => selection.issues.length > 0),
+          .filter((selection) => selection.comment.length > 0),
       ),
-    [selectedByOrder, slides],
+    [commentsByOrder, slides],
   );
 
   useEffect(() => {
     updateReview?.({ selectionsJson, hasSelections });
   }, [selectionsJson, hasSelections, updateReview]);
 
-  function approveShot(order: number) {
-    setSelectedByOrder((current) => {
+  function clearComment(order: number) {
+    setCommentsByOrder((current) => {
       const next = { ...current };
       delete next[order];
       return next;
     });
   }
 
-  function toggleIssue(order: number, issue: StoryboardIssue) {
-    setSelectedByOrder((current) => {
-      const existing = current[order] ?? [];
-      const nextIssues = existing.includes(issue)
-        ? existing.filter((value) => value !== issue)
-        : [...existing, issue];
-
-      if (nextIssues.length === 0) {
-        const nextState = { ...current };
-        delete nextState[order];
-        return nextState;
-      }
-
-      return {
-        ...current,
-        [order]: nextIssues,
-      };
-    });
+  function updateComment(order: number, comment: string) {
+    setCommentsByOrder((current) => ({
+      ...current,
+      [order]: comment,
+    }));
   }
 
   return (
@@ -90,54 +66,36 @@ export function StoryboardReviewPanel({
       <StoryboardSlideGallery
         slides={slides}
         renderFooter={(slide) => {
-          const selectedIssues = selectedByOrder[slide.order] ?? [];
-          const hasRevisions = selectedIssues.length > 0;
+          const comment = commentsByOrder[slide.order] ?? "";
+          const hasRevisions = comment.trim().length > 0;
 
           return (
             <div className="space-y-3">
-              <p className="text-sm font-medium">Shot actions</p>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={hasRevisions ? "outline" : "default"}
-                  onClick={() => approveShot(slide.order)}
-                >
-                  Approve
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={hasRevisions ? "default" : "outline"}
-                      className="gap-1"
-                    >
-                      Request Revision
-                      <ChevronDownIcon className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {STORYBOARD_ISSUES.map((issue) => {
-                      const isSelected = selectedIssues.includes(issue);
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={issue}
-                          checked={isSelected}
-                          onCheckedChange={() => toggleIssue(slide.order, issue)}
-                        >
-                          {getStoryboardIssueLabel(issue)}
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium">Feedback for this shot</p>
+                {hasRevisions ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-auto px-0 text-xs"
+                    onClick={() => clearComment(slide.order)}
+                  >
+                    Clear
+                  </Button>
+                ) : null}
               </div>
-              {hasRevisions && (
-                <p className="text-xs text-muted-foreground">
-                  Selected: {selectedIssues.map(getStoryboardIssueLabel).join(", ")}
-                </p>
-              )}
+              <Textarea
+                value={comment}
+                onChange={(event) => updateComment(slide.order, event.target.value)}
+                rows={3}
+                placeholder="Add the exact change needed for this shot. Leave blank if this shot is approved."
+              />
+              <p className="text-xs text-muted-foreground">
+                {hasRevisions
+                  ? "This shot will be included in the revision request."
+                  : "Leave this blank if the shot looks good."}
+              </p>
             </div>
           );
         }}
@@ -145,7 +103,7 @@ export function StoryboardReviewPanel({
 
       {selectedShotCount > 0 && (
         <p className="text-sm text-muted-foreground">
-          {selectedShotCount} shot{selectedShotCount === 1 ? "" : "s"} marked for changes
+          {selectedShotCount} shot{selectedShotCount === 1 ? "" : "s"} with feedback
         </p>
       )}
     </div>
