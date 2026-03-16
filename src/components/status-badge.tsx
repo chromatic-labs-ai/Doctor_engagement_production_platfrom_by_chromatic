@@ -20,40 +20,35 @@ const STATUS_CONFIG: Record<
 > = {
   draft: {
     className:
-      "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300",
+      "border-border bg-muted/70 text-foreground/80",
     Icon: FilePenLineIcon,
   },
   form_submitted: {
-    className: "border-border bg-muted text-muted-foreground",
+    className: "border-border bg-background text-muted-foreground",
     Icon: ClipboardIcon,
   },
   storyboard_in_progress: {
-    className:
-      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300",
+    className: "border-border bg-muted/80 text-foreground",
     Icon: PenLineIcon,
   },
   storyboard_review: {
-    className:
-      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300",
+    className: "border-warning/40 bg-warning/15 text-foreground",
     Icon: EyeIcon,
   },
   changes_requested: {
-    className:
-      "border-destructive/30 bg-destructive/10 text-destructive",
+    className: "border-destructive/25 bg-destructive/10 text-destructive",
     Icon: RotateCcwIcon,
   },
   storyboard_approved: {
-    className:
-      "border-success/30 bg-success/10 text-success",
+    className: "border-success/30 bg-success/12 text-foreground",
     Icon: CheckCircle2Icon,
   },
   video_in_progress: {
-    className:
-      "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950 dark:text-violet-300",
+    className: "border-border bg-muted/60 text-foreground",
     Icon: ClapperboardIcon,
   },
   video_delivered: {
-    className: "border-success/40 bg-success/15 text-success",
+    className: "border-success/35 bg-success/15 text-foreground",
     Icon: PackageCheckIcon,
   },
 };
@@ -63,7 +58,7 @@ export function StatusBadge({ status }: { status: RequestStatus }) {
   return (
     <Badge
       variant="outline"
-      className={cn("gap-1 text-[11px] font-medium", className)}
+      className={cn("gap-1.5 text-[11px] font-medium uppercase tracking-[0.06em]", className)}
     >
       <Icon className="size-3 shrink-0" />
       {STATUS_LABELS[status]}

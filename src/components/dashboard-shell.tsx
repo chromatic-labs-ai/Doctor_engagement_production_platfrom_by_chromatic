@@ -48,10 +48,12 @@ export function DashboardShell({
   children,
 }: DashboardShellProps) {
   const pathname = usePathname();
+  const activeItem =
+    items.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)) ??
+    items[0];
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-muted/40">
-      {/* Desktop Sidebar */}
+    <div className="flex min-h-screen w-full bg-background">
       <div className="hidden md:block">
         <DashboardSidebar
           title={title}
@@ -61,26 +63,25 @@ export function DashboardShell({
         />
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Top Bar — visible only on mobile */}
-        <header className="flex h-14 shrink-0 items-center gap-4 border-b bg-background px-4 md:hidden">
-          {/* Mobile: hamburger */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center border-b bg-background/95 px-4 backdrop-blur md:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0 md:hidden">
+              <Button variant="ghost" size="icon" className="shrink-0">
                 <MenuIcon className="size-5" />
                 <span className="sr-only">Toggle navigation menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col p-0">
-              <div className="p-6 pb-4">
-                <SheetTitle className="text-base font-bold">Doctor Engagement</SheetTitle>
-                <SheetDescription className="text-xs text-muted-foreground">
+            <SheetContent side="left" className="flex w-[88vw] max-w-sm flex-col border-r p-0">
+              <div className="space-y-2 border-b px-5 py-5">
+                <SheetTitle className="text-base font-semibold tracking-[-0.01em]">
+                  Doctor Engagement
+                </SheetTitle>
+                <SheetDescription className="text-sm leading-6 text-muted-foreground">
                   {title}
                 </SheetDescription>
               </div>
-              <Separator />
-              <nav className="flex-1 space-y-1 px-4 py-4">
+              <nav className="flex-1 space-y-2 px-4 py-5">
                 {items.map((item) => {
                   const active =
                     pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -89,10 +90,10 @@ export function DashboardShell({
                     <Button
                       key={item.href}
                       variant={active ? "secondary" : "ghost"}
-                      size="sm"
+                      size="default"
                       className={cn(
-                        "w-full justify-start gap-3",
-                        active && "bg-muted font-semibold",
+                        "w-full justify-start gap-3 border-border/60",
+                        active && "bg-secondary text-secondary-foreground",
                       )}
                       asChild
                     >
@@ -105,12 +106,12 @@ export function DashboardShell({
                 })}
               </nav>
               <Separator />
-              <div className="p-4">
+              <div className="space-y-2 p-4">
                 <PushNotificationsButton />
                 <form action={signOutAction}>
                   <Button
-                    variant="ghost"
-                    size="sm"
+                    variant="outline"
+                    size="default"
                     className="w-full justify-start gap-3 text-muted-foreground"
                   >
                     <LogOutIcon className="size-4" />
@@ -121,36 +122,59 @@ export function DashboardShell({
             </SheetContent>
           </Sheet>
 
-          {/* Mobile: app name */}
-          <span className="text-sm font-semibold md:hidden">Doctor Engagement</span>
+          <div className="ml-3 min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Doctor Engagement
+            </p>
+            <p className="truncate text-sm font-semibold tracking-[-0.01em]">
+              {activeItem?.label ?? title}
+            </p>
+          </div>
 
-          <div className="flex-1" />
-
-          {/* Right: user + sign out */}
-          <div className="flex items-center gap-1">
-            <div className="hidden sm:block">
+          <div className="ml-auto flex items-center gap-2">
+            <div className="hidden min-[420px]:block">
               <PushNotificationsButton compact />
             </div>
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {subtitle}
-            </span>
             <form action={signOutAction}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-muted-foreground"
-              >
+              <Button variant="ghost" size="icon" className="text-muted-foreground">
                 <LogOutIcon className="size-4" />
-                <span className="hidden sm:inline">Sign out</span>
+                <span className="sr-only">Sign out</span>
               </Button>
             </form>
           </div>
         </header>
 
-        {/* Main — no padding, pages manage their own */}
-        <main className="flex-1 overflow-y-auto bg-muted/40">
+        <main className="flex-1 overflow-y-auto bg-background pb-24 md:pb-0">
           {children}
         </main>
+
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/98 px-3 py-3 backdrop-blur md:hidden">
+          <div className="grid grid-cols-2 gap-2">
+            {items.map((item) => {
+              const active =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const Icon = ICON_MAP[item.href] ?? LayoutDashboardIcon;
+
+              return (
+                <Button
+                  key={item.href}
+                  variant={active ? "secondary" : "ghost"}
+                  size="default"
+                  className={cn(
+                    "h-12 justify-start gap-3 px-3.5",
+                    active && "bg-secondary text-secondary-foreground",
+                  )}
+                  asChild
+                >
+                  <Link href={item.href}>
+                    <Icon className="size-4" />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                </Button>
+              );
+            })}
+          </div>
+        </nav>
       </div>
     </div>
   );

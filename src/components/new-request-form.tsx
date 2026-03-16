@@ -7,10 +7,20 @@ import { saveRequestDraftAction, submitRequestAction } from "@/lib/actions";
 import { createClient } from "@/lib/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircleIcon } from "lucide-react";
+
+const selectClassName =
+  "h-11 w-full rounded-sm border border-input bg-background px-3.5 text-sm outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30";
 
 function safeFileName(fileName: string) {
   return fileName.toLowerCase().replace(/[^a-z0-9.\-_]/g, "-");
@@ -298,247 +308,288 @@ export function NewRequestForm({
       ref={formRef}
       onSubmit={handleSubmit}
       noValidate
-      className="space-y-5"
+      className="space-y-6"
     >
       <input type="hidden" name="request_id" value={requestId ?? ""} />
       <input type="hidden" name="existing_young_photo_path" value={initialYoungPhotoPath} />
       <input type="hidden" name="existing_current_photo_path" value={initialCurrentPhotoPath} />
       <input type="hidden" name="existing_journey_audio_path" value={initialJourneyAudioPath} />
-      <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
-        <div className="space-y-2">
-          <Label htmlFor="resume_autofill">Autofill From Resume</Label>
-          <p className="text-xs text-muted-foreground">
-            Upload a resume in PDF, DOCX, TXT, PNG, JPG, or WEBP format and we&apos;ll
-            suggest answers for the factual fields. Legacy `.doc` files are not supported yet.
-          </p>
-        </div>
-        <Input
-          id="resume_autofill"
-          type="file"
-          accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
-          onChange={handleResumeUpload}
-          disabled={isAutofilling || isSubmitting}
-        />
-        <p className="text-xs text-muted-foreground">
-          {isAutofilling
-            ? "Extracting details from the uploaded resume..."
-            : "Suggested values can still be edited before submitting."}
-        </p>
-        {autofillWarnings.map((warning) => (
-          <p key={warning} className="text-xs text-muted-foreground">
-            {warning}
-          </p>
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="doctor_name">Full Name *</Label>
-        <p className="text-xs text-muted-foreground">
-          Include your prefix — Dr., Prof., etc.
-        </p>
-        <Input
-          id="doctor_name"
-          name="doctor_name"
-          required
-          placeholder="Dr. Jane Doe"
-          value={formValues.doctor_name}
-          onChange={(event) => updateFieldValue("doctor_name", event.target.value)}
-        />
-        {suggestedKeys.includes("doctor_name") ? (
-          <p className="text-xs text-muted-foreground">Suggested from resume</p>
-        ) : null}
-      </div>
-
-      {activeFields.map((field) => (
-        <div key={field.key} className="space-y-2">
-          <Label htmlFor={`field_${field.key}`}>
-            {field.label}
-            {field.required ? " *" : ""}
-            {suggestedKeys.includes(field.key) ? (
-              <span className="ml-2 text-xs font-normal text-muted-foreground">
-                Suggested from resume
-              </span>
-            ) : null}
-          </Label>
-          {field.description ? (
-            <p className="text-xs text-muted-foreground">{field.description}</p>
-          ) : null}
-          {field.type === "textarea" ? (
-            <Textarea
-              id={`field_${field.key}`}
-              name={`field_${field.key}`}
-              rows={4}
-              required={field.required}
-              placeholder={field.placeholder}
-              value={formValues[field.key] ?? ""}
-              onChange={(event) => updateFieldValue(field.key, event.target.value)}
-            />
-          ) : field.type === "select" ? (
-            <select
-              id={`field_${field.key}`}
-              name={`field_${field.key}`}
-              required={field.required}
-              value={formValues[field.key] ?? ""}
-              onChange={(event) => updateFieldValue(field.key, event.target.value)}
-              className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-            >
-              <option value="" disabled>
-                Select {field.label}
-              </option>
-              {(field.options ?? []).map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <Input
-              id={`field_${field.key}`}
-              name={`field_${field.key}`}
-              required={field.required}
-              placeholder={field.placeholder}
-              value={formValues[field.key] ?? ""}
-              onChange={(event) => updateFieldValue(field.key, event.target.value)}
-            />
-          )}
-        </div>
-      ))}
-
-      <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
-        <div className="space-y-2">
-          <Label>Tell us about your journey</Label>
-          <p className="text-xs text-muted-foreground">
-            This is a personal question. Choose how you want to answer it.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="journey_input_mode"
-              value="audio"
-              checked={journeyInputMode === "audio"}
-              onChange={() => setJourneyInputMode("audio")}
-            />
-            Audio
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="journey_input_mode"
-              value="text"
-              checked={journeyInputMode === "text"}
-              onChange={() => setJourneyInputMode("text")}
-            />
-            Text
-          </label>
-        </div>
-
-        {journeyInputMode === "audio" ? (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Request Intake</CardTitle>
+          <CardDescription>
+            Complete the essentials first, then use resume autofill to speed up the factual fields.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="journey_audio">Upload Audio Note</Label>
-            <p className="text-xs text-muted-foreground">
-              Upload a voice note about the doctor&apos;s journey.
+            <Label htmlFor="resume_autofill">Autofill From Resume</Label>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Upload a PDF, DOCX, TXT, PNG, JPG, or WEBP file and we&apos;ll suggest answers for
+              the factual fields. Legacy `.doc` files are not supported yet.
             </p>
-            {initialJourneyAudioPath ? (
-              <p className="text-xs text-muted-foreground">
-                An audio note is already attached. Upload a new one only if you want to replace it.
+          </div>
+          <Input
+            id="resume_autofill"
+            type="file"
+            accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
+            onChange={handleResumeUpload}
+            disabled={isAutofilling || isSubmitting}
+          />
+          <p className="text-sm text-muted-foreground">
+            {isAutofilling
+              ? "Extracting details from the uploaded resume..."
+              : "Suggested values can still be edited before submitting."}
+          </p>
+          {autofillWarnings.map((warning) => (
+            <p key={warning} className="text-sm text-muted-foreground">
+              {warning}
+            </p>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Doctor Details</CardTitle>
+          <CardDescription>
+            Keep this information factual and easy to verify.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="doctor_name">Full Name *</Label>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Include the preferred prefix such as Dr. or Prof.
+            </p>
+            <Input
+              id="doctor_name"
+              name="doctor_name"
+              required
+              placeholder="Dr. Jane Doe"
+              value={formValues.doctor_name}
+              onChange={(event) => updateFieldValue("doctor_name", event.target.value)}
+            />
+            {suggestedKeys.includes("doctor_name") ? (
+              <p className="text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                Suggested from resume
               </p>
             ) : null}
-            <Input
-              id="journey_audio"
-              name="journey_audio"
-              type="file"
-              accept="audio/*"
-            />
           </div>
-        ) : (
-          <div className="space-y-2">
-            <Label htmlFor="field_personal_journey">Type Your Answer</Label>
-            <Textarea
-              id="field_personal_journey"
-              name="field_personal_journey"
-              rows={4}
-              placeholder="Share the moments, challenges, or milestones that shaped your journey."
-              value={formValues.personal_journey}
-              onChange={(event) => updateFieldValue("personal_journey", event.target.value)}
-            />
-          </div>
-        )}
-      </div>
 
-      <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
-        <div className="space-y-2">
-          <Label className="text-base">Reference Photos *</Label>
-          <div className="space-y-2 text-xs text-muted-foreground">
-            <p>1. Please share a full photo or a clear face photo.</p>
-            <p>2. We need two photos: one younger photo and one current or recent photo.</p>
-            <p>3. Please avoid family or group photos. Cropped photos focused only on the person are completely fine.</p>
-            <p>These photos may also be used later to create a digital sketch reference.</p>
+          <div className="grid gap-5 md:grid-cols-2">
+            {activeFields.map((field) => (
+              <div
+                key={field.key}
+                className={field.type === "textarea" ? "space-y-2 md:col-span-2" : "space-y-2"}
+              >
+                <Label htmlFor={`field_${field.key}`}>
+                  {field.label}
+                  {field.required ? " *" : ""}
+                  {suggestedKeys.includes(field.key) ? (
+                    <span className="ml-2 text-xs font-normal uppercase tracking-[0.08em] text-muted-foreground">
+                      Suggested
+                    </span>
+                  ) : null}
+                </Label>
+                {field.description ? (
+                  <p className="text-sm leading-6 text-muted-foreground">{field.description}</p>
+                ) : null}
+                {field.type === "textarea" ? (
+                  <Textarea
+                    id={`field_${field.key}`}
+                    name={`field_${field.key}`}
+                    rows={4}
+                    required={field.required}
+                    placeholder={field.placeholder}
+                    value={formValues[field.key] ?? ""}
+                    onChange={(event) => updateFieldValue(field.key, event.target.value)}
+                  />
+                ) : field.type === "select" ? (
+                  <select
+                    id={`field_${field.key}`}
+                    name={`field_${field.key}`}
+                    required={field.required}
+                    value={formValues[field.key] ?? ""}
+                    onChange={(event) => updateFieldValue(field.key, event.target.value)}
+                    className={selectClassName}
+                  >
+                    <option value="" disabled>
+                      Select {field.label}
+                    </option>
+                    {(field.options ?? []).map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id={`field_${field.key}`}
+                    name={`field_${field.key}`}
+                    required={field.required}
+                    placeholder={field.placeholder}
+                    value={formValues[field.key] ?? ""}
+                    onChange={(event) => updateFieldValue(field.key, event.target.value)}
+                  />
+                )}
+              </div>
+            ))}
           </div>
-          <div className="mt-3">
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Personal Journey</CardTitle>
+          <CardDescription>
+            Choose the format that is easiest for the doctor to share.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label
+              className={`flex min-h-12 items-center gap-3 rounded-sm border px-4 py-3 text-sm transition-colors ${
+                journeyInputMode === "audio"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background"
+              }`}
+            >
+              <input
+                type="radio"
+                name="journey_input_mode"
+                value="audio"
+                checked={journeyInputMode === "audio"}
+                onChange={() => setJourneyInputMode("audio")}
+              />
+              Audio note
+            </label>
+            <label
+              className={`flex min-h-12 items-center gap-3 rounded-sm border px-4 py-3 text-sm transition-colors ${
+                journeyInputMode === "text"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background"
+              }`}
+            >
+              <input
+                type="radio"
+                name="journey_input_mode"
+                value="text"
+                checked={journeyInputMode === "text"}
+                onChange={() => setJourneyInputMode("text")}
+              />
+              Written answer
+            </label>
+          </div>
+
+          {journeyInputMode === "audio" ? (
+            <div className="space-y-2">
+              <Label htmlFor="journey_audio">Upload Audio Note</Label>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Upload a voice note about the doctor&apos;s journey.
+              </p>
+              {initialJourneyAudioPath ? (
+                <p className="text-sm text-muted-foreground">
+                  An audio note is already attached. Upload a new one only if you want to replace
+                  it.
+                </p>
+              ) : null}
+              <Input id="journey_audio" name="journey_audio" type="file" accept="audio/*" />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="field_personal_journey">Type Your Answer</Label>
+              <Textarea
+                id="field_personal_journey"
+                name="field_personal_journey"
+                rows={5}
+                placeholder="Share the moments, challenges, or milestones that shaped your journey."
+                value={formValues.personal_journey}
+                onChange={(event) => updateFieldValue("personal_journey", event.target.value)}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Reference Photos</CardTitle>
+          <CardDescription>
+            We need one younger photo and one current photo to guide the creative team.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="space-y-2 text-sm leading-6 text-muted-foreground">
+              <p>1. Share a full photo or a clear face photo.</p>
+              <p>2. We need two photos: one younger photo and one current or recent photo.</p>
+              <p>3. Avoid family or group photos. Cropped portraits focused only on the doctor are fine.</p>
+              <p>These photos may also be used later to create a digital sketch reference.</p>
+            </div>
             <img
               src="/reference-photo-sketch.png"
               alt="Photo guide sketch: Good — individual portrait or cropped face. Avoid — family or group photos."
-              className="w-full max-w-md rounded-lg border object-contain"
+              className="w-full rounded-sm border object-contain"
             />
           </div>
-        </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="field_young_photo_age">Age in Younger Photo *</Label>
-            <Input
-              id="field_young_photo_age"
-              name="field_young_photo_age"
-              type="number"
-              min="1"
-              required
-              placeholder="25"
-              value={formValues.young_photo_age}
-              onChange={(event) => updateFieldValue("young_photo_age", event.target.value)}
-            />
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="field_young_photo_age">Age in Younger Photo *</Label>
+              <Input
+                id="field_young_photo_age"
+                name="field_young_photo_age"
+                type="number"
+                min="1"
+                required
+                placeholder="25"
+                value={formValues.young_photo_age}
+                onChange={(event) => updateFieldValue("young_photo_age", event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="young_photo">Younger Photo *</Label>
+              {initialYoungPhotoPath ? (
+                <p className="text-sm text-muted-foreground">
+                  A younger photo is already attached. Upload a new file only if you want to
+                  replace it.
+                </p>
+              ) : null}
+              <Input id="young_photo" name="young_photo" type="file" accept="image/*" required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="field_current_photo_age">Current Age in Recent Photo *</Label>
+              <Input
+                id="field_current_photo_age"
+                name="field_current_photo_age"
+                type="number"
+                min="1"
+                required
+                placeholder="52"
+                value={formValues.current_photo_age}
+                onChange={(event) => updateFieldValue("current_photo_age", event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="current_photo">Current / Recent Photo *</Label>
+              {initialCurrentPhotoPath ? (
+                <p className="text-sm text-muted-foreground">
+                  A current photo is already attached. Upload a new file only if you want to
+                  replace it.
+                </p>
+              ) : null}
+              <Input
+                id="current_photo"
+                name="current_photo"
+                type="file"
+                accept="image/*"
+                required
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="young_photo">Younger Photo *</Label>
-            {initialYoungPhotoPath ? (
-              <p className="text-xs text-muted-foreground">
-                A younger photo is already attached. Upload a new file only if you want to replace it.
-              </p>
-            ) : null}
-            <Input id="young_photo" name="young_photo" type="file" accept="image/*" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="field_current_photo_age">Current Age in Recent Photo *</Label>
-            <Input
-              id="field_current_photo_age"
-              name="field_current_photo_age"
-              type="number"
-              min="1"
-              required
-              placeholder="52"
-              value={formValues.current_photo_age}
-              onChange={(event) => updateFieldValue("current_photo_age", event.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="current_photo">Current / Recent Photo *</Label>
-            {initialCurrentPhotoPath ? (
-              <p className="text-xs text-muted-foreground">
-                A current photo is already attached. Upload a new file only if you want to replace it.
-              </p>
-            ) : null}
-            <Input
-              id="current_photo"
-              name="current_photo"
-              type="file"
-              accept="image/*"
-              required
-            />
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {error ? (
         <Alert variant="destructive">
@@ -554,7 +605,7 @@ export function NewRequestForm({
         </Alert>
       ) : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="sticky bottom-20 z-20 flex flex-col gap-3 border bg-background/95 p-4 backdrop-blur md:bottom-0 md:flex-row md:justify-end">
         <Button
           type="submit"
           value="draft"

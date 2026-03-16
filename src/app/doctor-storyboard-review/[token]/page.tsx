@@ -89,10 +89,13 @@ export default async function DoctorStoryboardReviewPage({
     : null;
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-5xl items-start px-4 py-10 md:px-6">
+    <div className="mx-auto flex min-h-screen w-full max-w-5xl items-start px-4 py-6 md:px-6 md:py-10">
       <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Review Storyboard</CardTitle>
+        <CardHeader className="border-b">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Storyboard Review
+          </p>
+          <CardTitle className="mt-2">Review Storyboard</CardTitle>
           <CardDescription>
             Please review the storyboard and let the team know whether it is approved or needs
             changes.
@@ -134,12 +137,12 @@ export default async function DoctorStoryboardReviewPage({
 
               <div className="space-y-3">
                 <Label>Decision *</Label>
-                <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
-                  <label className="flex items-center gap-2 text-sm">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="flex min-h-12 items-center gap-3 rounded-sm border px-4 py-3 text-sm transition-colors hover:bg-muted/30">
                     <input type="radio" name="decision" value="approve" required />
                     Approve storyboard
                   </label>
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex min-h-12 items-center gap-3 rounded-sm border px-4 py-3 text-sm transition-colors hover:bg-muted/30">
                     <input type="radio" name="decision" value="changes_requested" required />
                     Request changes
                   </label>

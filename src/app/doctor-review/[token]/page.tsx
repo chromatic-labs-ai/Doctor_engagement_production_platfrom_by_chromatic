@@ -20,6 +20,9 @@ import { submitDoctorReviewAction } from "@/lib/doctor-review-actions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DoctorReviewSessionRow } from "@/lib/types";
 
+const selectClassName =
+  "h-11 w-full rounded-sm border border-input bg-background px-3.5 text-sm outline-none transition-[border-color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30";
+
 export const runtime = "nodejs";
 
 function getStatusMessage(
@@ -67,10 +70,13 @@ export default async function DoctorReviewPage({
   const baseValues = session?.base_form_data ?? {};
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-3xl items-start px-4 py-10 md:px-6">
+    <div className="mx-auto flex min-h-screen w-full max-w-4xl items-start px-4 py-6 md:px-6 md:py-10">
       <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Review Your Profile Details</CardTitle>
+        <CardHeader className="border-b">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            Doctor Review
+          </p>
+          <CardTitle className="mt-2">Review Your Profile Details</CardTitle>
           <CardDescription>
             Please review the form prepared by our team and update anything that needs correction
             or adding.
@@ -90,7 +96,7 @@ export default async function DoctorReviewPage({
           ) : null}
 
           {!statusMessage && session ? (
-            <form action={submitDoctorReviewAction} className="space-y-5">
+            <form action={submitDoctorReviewAction} className="space-y-6">
               <input type="hidden" name="token" value={token} />
 
               <div className="space-y-2">
@@ -103,14 +109,18 @@ export default async function DoctorReviewPage({
                 />
               </div>
 
+              <div className="grid gap-5 md:grid-cols-2">
               {DOCTOR_REVIEW_FIELDS.map((field) => (
-                <div key={field.key} className="space-y-2">
+                <div
+                  key={field.key}
+                  className={field.type === "textarea" ? "space-y-2 md:col-span-2" : "space-y-2"}
+                >
                   <Label htmlFor={`field_${field.key}`}>
                     {field.label}
                     {field.required ? " *" : ""}
                   </Label>
                   {field.description ? (
-                    <p className="text-xs text-muted-foreground">{field.description}</p>
+                    <p className="text-sm leading-6 text-muted-foreground">{field.description}</p>
                   ) : null}
 
                   {field.type === "textarea" ? (
@@ -127,7 +137,7 @@ export default async function DoctorReviewPage({
                       name={`field_${field.key}`}
                       required={field.required}
                       defaultValue={normalizeDoctorReviewValue(baseValues[field.key])}
-                      className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                      className={selectClassName}
                     >
                       <option value="">Select {field.label}</option>
                       {(field.options ?? []).map((option) => (
@@ -151,8 +161,9 @@ export default async function DoctorReviewPage({
                   )}
                 </div>
               ))}
+              </div>
 
-              <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+              <div className="rounded-sm border bg-muted/30 p-4 text-sm text-muted-foreground">
                 Photos and audio files stay managed by our team in this step. This review page is
                 for form answers only.
               </div>

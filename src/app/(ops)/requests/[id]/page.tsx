@@ -15,6 +15,12 @@ import { StoryboardSlideGallery } from "@/components/storyboard-slide-gallery";
 import { StatusBadge } from "@/components/status-badge";
 import { VideoPlayer } from "@/components/video-player";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { countDoctorReviewChanges, isDoctorReviewExpired } from "@/lib/doctor-review";
 import {
@@ -189,28 +195,32 @@ export default async function OpsRequestDetailPage({
   return (
     <ReviewProvider>
       <div className="flex flex-col">
-        {/* Sticky Header — flush with top of scroll area, full width */}
-        <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-3 backdrop-blur-sm md:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-6xl flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-4 backdrop-blur-sm md:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" asChild className="h-8 w-8 shrink-0">
+              <Button variant="ghost" size="icon" asChild className="h-11 w-11 shrink-0">
                 <Link href="/dashboard">
                   <ArrowLeftIcon className="size-4" />
                 </Link>
               </Button>
-              <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-2">
-                <h1 className="truncate text-lg font-semibold tracking-tight">
-                  {request.doctor_name}
-                </h1>
-                <StatusBadge status={request.status} />
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Request Overview
+                </p>
+                <div className="mt-2 flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+                  <h1 className="truncate text-2xl font-semibold tracking-[-0.02em]">
+                    {request.doctor_name}
+                  </h1>
+                  <StatusBadge status={request.status} />
+                </div>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-3 pl-11 md:pl-0">
-              <span className="hidden font-mono text-xs text-muted-foreground sm:inline">
+            <div className="flex flex-wrap items-center gap-3 pl-14 md:pl-0">
+              <span className="rounded-sm border px-2 py-1 font-mono text-[11px] text-muted-foreground">
                 {request.id.slice(0, 8)}
               </span>
               {isDraft ? (
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" asChild>
                   <Link href={`/requests/${request.id}/edit`}>
                     <PencilIcon className="mr-2 size-4" />
                     Edit Draft
@@ -231,201 +241,214 @@ export default async function OpsRequestDetailPage({
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="flex flex-col lg:col-span-2">
-            {/* Video Section */}
-            {videoUrl && (
-              <section className="pb-6">
-                <h2 className="mb-4 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <VideoIcon className="size-4" /> Final Video
-                </h2>
-                <VideoPlayer
-                  url={videoUrl}
-                  requestId={request.id}
-                  initialDownloaded={Boolean(request.video_downloaded_at)}
-                />
-                <Separator className="mt-6" />
-              </section>
-            )}
+        <div className="mx-auto w-full max-w-6xl px-4 py-5 md:px-6 md:py-8 lg:px-8">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.75fr)_minmax(320px,1fr)] xl:items-start">
+            <div className="flex flex-col gap-6">
+              {videoUrl && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <VideoIcon className="size-4" />
+                      Final Video
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <VideoPlayer
+                      url={videoUrl}
+                      requestId={request.id}
+                      initialDownloaded={Boolean(request.video_downloaded_at)}
+                    />
+                    {request.video_downloaded_at ? (
+                      <p className="text-sm text-muted-foreground">
+                        Downloaded {new Date(request.video_downloaded_at).toLocaleString()}
+                        {videoDownloadedByProfile
+                          ? ` by ${videoDownloadedByProfile.full_name || videoDownloadedByProfile.email || "User"}`
+                          : ""}
+                      </p>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Storyboard Section */}
-            {latestStoryboard && (hasSlideStoryboard || latestStoryboardUrl) ? (
-              <section className="pb-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-sm font-medium text-muted-foreground">
-                    Storyboard (v{latestStoryboard.version})
-                  </h2>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(latestStoryboard.created_at).toLocaleDateString()}
-                  </span>
-                </div>
-                {hasSlideStoryboard ? (
-                  hasRenderableSlides ? (
-                    isInReview ? (
-                      <StoryboardReviewPanel
-                        slides={latestStoryboardSlides}
-                      />
-                    ) : (
-                      <StoryboardSlideGallery slides={latestStoryboardSlides} />
-                    )
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Storyboard slides could not be loaded right now.
-                    </p>
-                  )
-                ) : latestStoryboardUrl ? (
-                  <PdfViewer url={latestStoryboardUrl} />
-                ) : null}
-                {!canRequestRevision && isInReview && (
-                  <p className="mt-2 text-xs text-destructive">
-                    Revision limit reached — you can only approve at this stage.
-                  </p>
-                )}
-                <Separator className="mt-6" />
-              </section>
-            ) : (
-              !videoUrl && (
-                <section className="pb-6">
-                  <div className="flex flex-col items-center justify-center py-10 text-center">
-                    <div className="rounded-full bg-muted p-3">
-                      <FilmIcon className="size-6 text-muted-foreground" />
-                    </div>
-                    <p className="mt-2 text-sm font-medium">No storyboard yet</p>
-                    <p className="text-xs text-muted-foreground">
-                      Production team is working on your request.
-                    </p>
+              {latestStoryboard && (hasSlideStoryboard || latestStoryboardUrl) ? (
+                <Card>
+                  <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <CardTitle className="text-base">
+                      Storyboard (v{latestStoryboard.version})
+                    </CardTitle>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(latestStoryboard.created_at).toLocaleDateString()}
+                    </span>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {hasSlideStoryboard ? (
+                      hasRenderableSlides ? (
+                        isInReview ? (
+                          <StoryboardReviewPanel slides={latestStoryboardSlides} />
+                        ) : (
+                          <StoryboardSlideGallery slides={latestStoryboardSlides} />
+                        )
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Storyboard slides could not be loaded right now.
+                        </p>
+                      )
+                    ) : latestStoryboardUrl ? (
+                      <PdfViewer url={latestStoryboardUrl} />
+                    ) : null}
+                    {!canRequestRevision && isInReview && (
+                      <p className="text-sm text-destructive">
+                        Revision limit reached. Only approval is available at this stage.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                !videoUrl && (
+                  <Card className="border-dashed">
+                    <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="rounded-sm border bg-muted/50 p-4">
+                        <FilmIcon className="size-6 text-muted-foreground" />
+                      </div>
+                      <p className="mt-4 text-sm font-medium">No storyboard yet</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Production team is working on your request.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )
+              )}
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Comments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CommentThread
+                    requestId={request.id}
+                    comments={comments ?? []}
+                    canComment={canComment && !hasSlideStoryboard}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex flex-col gap-6">
+              {isDraft ? (
+                <DoctorReviewLinkPanel
+                  requestId={request.id}
+                  session={
+                    doctorReviewSession
+                      ? {
+                          id: doctorReviewSession.id,
+                          status: doctorReviewSession.status,
+                          expiresAt: doctorReviewSession.expires_at,
+                          submittedAt: doctorReviewSession.submitted_at,
+                          changedFieldCount: countDoctorReviewChanges(doctorReviewSession),
+                          isExpired:
+                            doctorReviewSession.status === "active" &&
+                            isDoctorReviewExpired(doctorReviewSession),
+                        }
+                      : null
+                  }
+                />
+              ) : null}
+              {isInReview && (latestStoryboardSlides.length > 0 || latestStoryboardUrl) ? (
+                <DoctorStoryboardReviewLinkPanel
+                  requestId={request.id}
+                  session={
+                    doctorStoryboardReviewSession
+                      ? {
+                          id: doctorStoryboardReviewSession.id,
+                          status: doctorStoryboardReviewSession.status,
+                          decision: doctorStoryboardReviewSession.submitted_decision,
+                          expiresAt: doctorStoryboardReviewSession.expires_at,
+                          submittedAt: doctorStoryboardReviewSession.submitted_at,
+                          feedbackCount: countDoctorStoryboardReviewFeedback(
+                            doctorStoryboardReviewSession,
+                          ),
+                          isExpired:
+                            doctorStoryboardReviewSession.status === "active" &&
+                            isDoctorReviewExpired(doctorStoryboardReviewSession),
+                          storyboardVersion: doctorStoryboardReviewSession.storyboard_version,
+                        }
+                      : null
+                  }
+                />
+              ) : null}
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Request Details</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-4 text-sm">
+                  <div className="grid gap-1">
+                    <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      Submitted
+                    </span>
+                    <span>{new Date(request.created_at).toLocaleString()}</span>
+                  </div>
+                  <div className="grid gap-1">
+                    <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      Video Downloaded
+                    </span>
+                    <span>
+                      {request.video_downloaded_at
+                        ? `${new Date(request.video_downloaded_at).toLocaleString()}${videoDownloadedByProfile ? ` by ${videoDownloadedByProfile.full_name || videoDownloadedByProfile.email || "User"}` : ""}`
+                        : "Not yet"}
+                    </span>
                   </div>
                   <Separator />
-                </section>
-              )
-            )}
-
-            {/* Comments */}
-            <section className="pt-2">
-              <CommentThread
-                requestId={request.id}
-                comments={comments ?? []}
-                canComment={canComment && !hasSlideStoryboard}
-              />
-            </section>
-          </div>
-
-          {/* Sidebar */}
-          <div className="flex flex-col gap-6 border-t pt-6 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            {isDraft ? (
-              <DoctorReviewLinkPanel
-                requestId={request.id}
-                session={
-                  doctorReviewSession
-                    ? {
-                        id: doctorReviewSession.id,
-                        status: doctorReviewSession.status,
-                        expiresAt: doctorReviewSession.expires_at,
-                        submittedAt: doctorReviewSession.submitted_at,
-                        changedFieldCount: countDoctorReviewChanges(doctorReviewSession),
-                        isExpired:
-                          doctorReviewSession.status === "active" &&
-                          isDoctorReviewExpired(doctorReviewSession),
-                      }
-                    : null
-                }
-              />
-            ) : null}
-            {isInReview && (latestStoryboardSlides.length > 0 || latestStoryboardUrl) ? (
-              <DoctorStoryboardReviewLinkPanel
-                requestId={request.id}
-                session={
-                  doctorStoryboardReviewSession
-                    ? {
-                        id: doctorStoryboardReviewSession.id,
-                        status: doctorStoryboardReviewSession.status,
-                        decision: doctorStoryboardReviewSession.submitted_decision,
-                        expiresAt: doctorStoryboardReviewSession.expires_at,
-                        submittedAt: doctorStoryboardReviewSession.submitted_at,
-                        feedbackCount: countDoctorStoryboardReviewFeedback(
-                          doctorStoryboardReviewSession,
-                        ),
-                        isExpired:
-                          doctorStoryboardReviewSession.status === "active" &&
-                          isDoctorReviewExpired(doctorStoryboardReviewSession),
-                        storyboardVersion: doctorStoryboardReviewSession.storyboard_version,
-                      }
-                    : null
-                }
-              />
-            ) : null}
-            <div>
-              <h2 className="mb-4 text-sm font-medium">Request Details</h2>
-              <div className="grid gap-4 text-sm">
-                <div className="grid gap-1">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Submitted
-                  </span>
-                  <span>{new Date(request.created_at).toLocaleString()}</span>
-                </div>
-                <div className="grid gap-1">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Video Downloaded
-                  </span>
-                  <span>
-                    {request.video_downloaded_at
-                      ? `${new Date(request.video_downloaded_at).toLocaleString()}${videoDownloadedByProfile ? ` by ${videoDownloadedByProfile.full_name || videoDownloadedByProfile.email || "User"}` : ""}`
-                      : "Not yet"}
-                  </span>
-                </div>
-                <Separator />
-                {requestDetails.map(([key, value]) => (
-                  <div key={key} className="grid gap-1">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {getFieldLabel(key)}
-                    </span>
-                    <span className="whitespace-pre-wrap wrap-break-word">
-                      {Array.isArray(value)
-                        ? value.join(", ") || "-"
-                        : String(value).trim() || "-"}
-                    </span>
-                  </div>
-                ))}
-                {youngPhotoUrl || currentPhotoUrl ? (
-                  <>
-                    <Separator />
-                    <div className="grid gap-3">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        Reference Photos
+                  {requestDetails.map(([key, value]) => (
+                    <div key={key} className="grid gap-1">
+                      <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                        {getFieldLabel(key)}
                       </span>
-                      <PhotoLightbox
-                        photos={[
-                          ...(youngPhotoUrl
-                            ? [{ url: youngPhotoUrl, label: "Younger Photo" }]
-                            : []),
-                          ...(currentPhotoUrl
-                            ? [{ url: currentPhotoUrl, label: "Current Photo" }]
-                            : []),
-                        ]}
-                      />
-                    </div>
-                  </>
-                ) : null}
-                {journeyAudioUrl ? (
-                  <>
-                    <Separator />
-                    <div className="grid gap-3">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        Journey Audio
+                      <span className="whitespace-pre-wrap break-words">
+                        {Array.isArray(value)
+                          ? value.join(", ") || "-"
+                          : String(value).trim() || "-"}
                       </span>
-                      <audio controls preload="none" className="w-full">
-                        <source src={journeyAudioUrl} />
-                        Your browser does not support audio playback.
-                      </audio>
                     </div>
-                  </>
-                ) : null}
-              </div>
+                  ))}
+                  {youngPhotoUrl || currentPhotoUrl ? (
+                    <>
+                      <Separator />
+                      <div className="grid gap-3">
+                        <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                          Reference Photos
+                        </span>
+                        <PhotoLightbox
+                          photos={[
+                            ...(youngPhotoUrl
+                              ? [{ url: youngPhotoUrl, label: "Younger Photo" }]
+                              : []),
+                            ...(currentPhotoUrl
+                              ? [{ url: currentPhotoUrl, label: "Current Photo" }]
+                              : []),
+                          ]}
+                        />
+                      </div>
+                    </>
+                  ) : null}
+                  {journeyAudioUrl ? (
+                    <>
+                      <Separator />
+                      <div className="grid gap-3">
+                        <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                          Journey Audio
+                        </span>
+                        <audio controls preload="none" className="w-full">
+                          <source src={journeyAudioUrl} />
+                          Your browser does not support audio playback.
+                        </audio>
+                      </div>
+                    </>
+                  ) : null}
+                </CardContent>
+              </Card>
             </div>
           </div>
-        </div>
         </div>
       </div>
     </ReviewProvider>
