@@ -271,14 +271,11 @@ function validateFinalRequestSubmission(formData: FormData, data: JsonRecord) {
   if (!String(data.current_photo_path ?? "").trim()) {
     return "Please upload a current photo.";
   }
-
-  const journeyInputMode = String(formData.get("journey_input_mode") ?? "audio");
-  if (journeyInputMode === "text") {
-    if (!String(data.personal_journey ?? "").trim()) {
-      return "Please type the journey answer.";
-    }
-  } else if (!String(data.journey_audio_path ?? "").trim()) {
-    return "Please upload an audio note about the journey.";
+  if (!String(data.young_photo_age ?? "").trim()) {
+    return "Please enter the age in the younger photo.";
+  }
+  if (!String(data.current_photo_age ?? "").trim()) {
+    return "Please enter the current age in the recent photo.";
   }
 
   return "";
