@@ -9,6 +9,7 @@ import { DoctorStoryboardReviewLinkPanel } from "@/components/doctor-storyboard-
 import { HeaderActions } from "@/components/header-actions";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { PdfViewer } from "@/components/pdf-viewer";
+import { RequestRealtimeRefresh } from "@/components/request-realtime-refresh";
 import { ReviewProvider } from "@/components/review-context";
 import { StoryboardReviewPanel } from "@/components/storyboard-review-panel";
 import { StoryboardSlideGallery } from "@/components/storyboard-slide-gallery";
@@ -194,6 +195,7 @@ export default async function OpsRequestDetailPage({
 
   return (
     <ReviewProvider>
+      <RequestRealtimeRefresh requestId={request.id} />
       <div className="flex flex-col">
         <div className="sticky top-0 z-20 border-b bg-background/95 px-4 py-4 backdrop-blur-sm md:px-6 lg:px-8">
           <div className="mx-auto flex max-w-6xl flex-col gap-4 md:flex-row md:items-end md:justify-between">

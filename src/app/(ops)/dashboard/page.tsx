@@ -13,6 +13,7 @@ import {
 
 import { StatusBadge } from "@/components/status-badge";
 import { DashboardFilterForm } from "@/components/dashboard-filter-form";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -164,7 +165,7 @@ export default async function OpsDashboardPage({
   const params = (await searchParams) || {};
   const query = params.q?.trim() ?? "";
   const status = params.status?.trim() ?? "all";
-  const { profile } = await getCurrentUserAndProfile();
+  const { profile, userId } = await getCurrentUserAndProfile();
   const supabase = await createClient();
 
   const { data: summaryRequests } = await supabase
@@ -187,6 +188,7 @@ export default async function OpsDashboardPage({
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-5 md:px-6 md:py-8 lg:px-8">
+      <RealtimeRefresh topics={[`user:${userId}`]} />
       <div className="flex flex-col gap-6 md:gap-8">
         <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>

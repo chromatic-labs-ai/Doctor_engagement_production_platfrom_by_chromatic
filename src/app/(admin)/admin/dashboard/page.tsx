@@ -12,6 +12,7 @@ import {
 
 import { StatusBadge } from "@/components/status-badge";
 import { DashboardFilterForm } from "@/components/dashboard-filter-form";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -177,6 +178,7 @@ export default async function AdminDashboardPage({
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-5 md:px-6 md:py-8 lg:px-8">
+      <RealtimeRefresh topics={["dashboard:admin"]} />
       <div className="flex flex-col gap-6 md:gap-8">
         <div className="border-b pb-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">

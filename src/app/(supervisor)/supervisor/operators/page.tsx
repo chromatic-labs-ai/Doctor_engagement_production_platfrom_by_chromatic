@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { EyeIcon, UserIcon } from "lucide-react";
 
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +62,7 @@ export default async function SupervisorOperatorsPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 md:px-6 md:py-8 lg:px-8">
+      <RealtimeRefresh topics={[`company:${profile.company_id!}`]} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Operators</h1>

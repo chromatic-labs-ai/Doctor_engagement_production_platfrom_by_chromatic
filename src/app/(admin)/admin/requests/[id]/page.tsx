@@ -6,6 +6,7 @@ import { AdminUploadForms } from "@/components/admin-upload-forms";
 import { CommentThread } from "@/components/comment-thread";
 import { JsonCopyPanel } from "@/components/json-copy-panel";
 import { PdfViewer } from "@/components/pdf-viewer";
+import { RequestRealtimeRefresh } from "@/components/request-realtime-refresh";
 import { StoryboardSlideGallery } from "@/components/storyboard-slide-gallery";
 import { StatusBadge } from "@/components/status-badge";
 import { VideoPlayer } from "@/components/video-player";
@@ -142,6 +143,7 @@ export default async function AdminRequestDetailPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-5 md:px-6 md:py-8 lg:px-8">
+      <RequestRealtimeRefresh requestId={request.id} />
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 border-b pb-5">
           <div className="flex items-center gap-4">
