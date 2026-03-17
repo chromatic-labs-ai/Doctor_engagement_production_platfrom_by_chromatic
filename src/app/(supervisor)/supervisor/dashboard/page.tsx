@@ -14,6 +14,7 @@ import {
 
 import { StatusBadge } from "@/components/status-badge";
 import { DashboardFilterForm } from "@/components/dashboard-filter-form";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -201,6 +202,7 @@ export default async function SupervisorDashboardPage({
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-5 md:px-6 md:py-8 lg:px-8">
+      <RealtimeRefresh topics={[`company:${profile.company_id!}`]} />
       <div className="flex flex-col gap-6 md:gap-8">
         <div className="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
