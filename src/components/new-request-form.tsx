@@ -92,6 +92,7 @@ export function NewRequestForm({
 }: NewRequestFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitIntent, setSubmitIntent] = useState<"draft" | "final" | null>(null);
   const [isAutofilling, setIsAutofilling] = useState(false);
   const [error, setError] = useState("");
   const [autofillError, setAutofillError] = useState("");
@@ -230,6 +231,7 @@ export function NewRequestForm({
     const intent = submitter?.value === "draft" ? "draft" : "final";
 
     setIsSubmitting(true);
+    setSubmitIntent(intent);
     setError("");
 
     const form = event.currentTarget;
@@ -237,7 +239,8 @@ export function NewRequestForm({
     const youngPhoto = formData.get("young_photo");
     const currentPhoto = formData.get("current_photo");
     const journeyAudio = formData.get("journey_audio");
-    const personalJourney = String(formData.get("field_personal_journey") ?? "").trim();
+    const youngPhotoAge = String(formData.get("field_young_photo_age") ?? "").trim();
+    const currentPhotoAge = String(formData.get("field_current_photo_age") ?? "").trim();
     const existingYoungPhotoPath = String(formData.get("existing_young_photo_path") ?? "").trim();
     const existingCurrentPhotoPath = String(formData.get("existing_current_photo_path") ?? "").trim();
     const existingJourneyAudioPath = String(formData.get("existing_journey_audio_path") ?? "").trim();
@@ -247,29 +250,34 @@ export function NewRequestForm({
     const hasNewJourneyAudio = journeyAudio instanceof File && journeyAudio.size > 0;
 
     if (intent === "final") {
+      if (!youngPhotoAge) {
+        setError("Please enter the age in the younger photo.");
+        setIsSubmitting(false);
+        setSubmitIntent(null);
+        return;
+      }
+
+      if (!currentPhotoAge) {
+        setError("Please enter the current age in the recent photo.");
+        setIsSubmitting(false);
+        setSubmitIntent(null);
+        return;
+      }
+
       if (!hasNewYoungPhoto && !existingYoungPhotoPath) {
         setError("Please upload a younger photo.");
         setIsSubmitting(false);
+        setSubmitIntent(null);
         return;
       }
 
       if (!hasNewCurrentPhoto && !existingCurrentPhotoPath) {
         setError("Please upload a current photo.");
         setIsSubmitting(false);
+        setSubmitIntent(null);
         return;
       }
 
-      if (journeyInputMode === "text") {
-        if (personalJourney.length === 0) {
-          setError("Please type your journey.");
-          setIsSubmitting(false);
-          return;
-        }
-      } else if (!hasNewJourneyAudio && !existingJourneyAudioPath) {
-        setError("Please upload an audio note about your journey.");
-        setIsSubmitting(false);
-        return;
-      }
     }
 
     try {
@@ -329,6 +337,7 @@ export function NewRequestForm({
         await submitRequestAction(formData);
       }
       setIsSubmitting(false);
+      setSubmitIntent(null);
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -336,6 +345,7 @@ export function NewRequestForm({
           : "Failed to save the request.",
       );
       setIsSubmitting(false);
+      setSubmitIntent(null);
     }
   };
 
@@ -679,10 +689,14 @@ export function NewRequestForm({
           variant="outline"
           className="w-full sm:w-auto"
         >
-          {isSubmitting ? "Saving..." : isEditingDraft ? "Save Draft Changes" : "Save Draft"}
+          {isSubmitting && submitIntent === "draft"
+            ? "Saving..."
+            : isEditingDraft
+              ? "Save Draft Changes"
+              : "Save Draft"}
         </Button>
         <Button type="submit" value="final" disabled={isSubmitting} className="w-full sm:w-auto">
-          {isSubmitting
+          {isSubmitting && submitIntent === "final"
             ? "Submitting..."
             : isEditingDraft
               ? "Submit Final"
