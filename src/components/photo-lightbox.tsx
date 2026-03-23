@@ -15,9 +15,9 @@ export function PhotoLightbox({ photos }: { photos: Photo[] }) {
   return (
     <>
       <div className="grid grid-cols-2 gap-3">
-        {photos.map((photo) => (
+        {photos.map((photo, index) => (
           <button
-            key={photo.url}
+            key={`${photo.url}-${photo.label}-${index}`}
             type="button"
             onClick={() => setActive(photo)}
             className="group flex flex-col gap-1.5 text-left"

@@ -20,7 +20,13 @@ export type RequestStatus =
   | "video_in_progress"
   | "video_delivered";
 
-export type JsonRecord = Record<string, string | number | boolean | string[]>;
+/** Optional extra reference images beyond younger + current (see MAX_REFERENCE_PHOTOS_TOTAL). */
+export type AdditionalReferencePhoto = { path: string; age: string };
+
+export type JsonRecord = Record<
+  string,
+  string | number | boolean | string[] | AdditionalReferencePhoto[]
+>;
 
 export interface Profile {
   id: string;
