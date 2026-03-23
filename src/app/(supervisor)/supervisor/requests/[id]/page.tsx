@@ -19,6 +19,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  parseAdditionalReferencePhotos,
+  parseAssetPathStrings,
+} from "@/lib/additional-reference-photos";
 import { StoryboardSlideWithUrl } from "@/lib/storyboard";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -128,8 +132,7 @@ export default async function SupervisorRequestDetailPage({
       ).data?.signedUrl ?? null
     : (video?.video_url ?? null);
 
-  const rawAssetPaths = request.form_data.asset_paths;
-  const assetPaths = Array.isArray(rawAssetPaths) ? rawAssetPaths : [];
+  const assetPaths = parseAssetPathStrings(request.form_data.asset_paths);
   const signedAssetUrls = new Map<string, string>();
   for (const path of assetPaths) {
     const { data } = await supabase.storage
@@ -163,8 +166,19 @@ export default async function SupervisorRequestDetailPage({
       key !== "asset_paths" &&
       key !== "young_photo_path" &&
       key !== "current_photo_path" &&
-      key !== "journey_audio_path",
+      key !== "journey_audio_path" &&
+      key !== "additional_reference_photos",
   );
+
+  const additionalReferencePhotos = parseAdditionalReferencePhotos(
+    request.form_data.additional_reference_photos,
+  );
+  const additionalReferenceLightboxItems = additionalReferencePhotos
+    .map((entry) => {
+      const url = signedAssetUrls.get(entry.path);
+      return url ? { url, label: `Reference photo (age ${entry.age})` } : null;
+    })
+    .filter((item): item is { url: string; label: string } => item !== null);
 
   const hasSlideStoryboard = hasSlideMetadata;
   const hasRenderableSlides = latestStoryboardSlides.length > 0;
@@ -328,7 +342,7 @@ export default async function SupervisorRequestDetailPage({
                     </span>
                   </div>
                 ))}
-                {youngPhotoUrl || currentPhotoUrl ? (
+                {youngPhotoUrl || currentPhotoUrl || additionalReferenceLightboxItems.length > 0 ? (
                   <>
                     <Separator />
                     <div className="grid gap-3">
@@ -343,6 +357,7 @@ export default async function SupervisorRequestDetailPage({
                           ...(currentPhotoUrl
                             ? [{ url: currentPhotoUrl, label: "Current Photo" }]
                             : []),
+                          ...additionalReferenceLightboxItems,
                         ]}
                       />
                     </div>

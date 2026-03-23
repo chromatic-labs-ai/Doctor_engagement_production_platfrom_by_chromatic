@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { NewRequestForm } from "@/components/new-request-form";
+import { parseAdditionalReferencePhotos } from "@/lib/additional-reference-photos";
 import { createClient } from "@/lib/supabase/server";
 import { RequestRow } from "@/lib/types";
 
@@ -51,6 +52,9 @@ export default async function EditDraftRequestPage({
         initialYoungPhotoPath={String(request.form_data.young_photo_path ?? "")}
         initialCurrentPhotoPath={String(request.form_data.current_photo_path ?? "")}
         initialJourneyAudioPath={String(request.form_data.journey_audio_path ?? "")}
+        initialAdditionalReferencePhotos={parseAdditionalReferencePhotos(
+          request.form_data.additional_reference_photos,
+        )}
       />
     </div>
   );

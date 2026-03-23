@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { REQUEST_FORM_FIELDS } from "@/config/request-form";
+import {
+  MAX_ADDITIONAL_REFERENCE_PHOTOS,
+  normalizeAdditionalReferencePhotosInput,
+} from "@/lib/additional-reference-photos";
 import { REQUEST_STATUSES } from "@/lib/constants";
 import { sendPushNotifications } from "@/lib/push-notifications";
 import {
@@ -167,7 +171,7 @@ export async function signInAction(formData: FormData) {
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: "Email and password are required." };
+    return { error: "Username and password are required." };
   }
 
   const supabase = await createClient();
@@ -246,13 +250,36 @@ function buildRequestFormData(formData: FormData) {
     data.journey_audio_path = journeyAudioPath;
   }
 
+  const rawAdditionalRef = String(formData.get("additional_reference_photos_json") ?? "").trim();
+  let additionalReferencePhotos = normalizeAdditionalReferencePhotosInput(undefined);
+  if (rawAdditionalRef) {
+    try {
+      const parsed = JSON.parse(rawAdditionalRef);
+      additionalReferencePhotos = normalizeAdditionalReferencePhotosInput(parsed);
+    } catch (error) {
+      console.error("Invalid additional_reference_photos_json", error);
+    }
+  }
+  data.additional_reference_photos = additionalReferencePhotos;
+
   return data;
 }
+
+const ALLOWED_DOCTOR_TYPES = new Set(["KOL", "KBL", "General"]);
 
 function validateFinalRequestSubmission(formData: FormData, data: JsonRecord) {
   const doctorName = String(formData.get("doctor_name") ?? "").trim();
   if (!doctorName) {
     return "Please enter the doctor's full name.";
+  }
+
+  const doctorType =
+    typeof data.doctor_type === "string" ? String(data.doctor_type).trim() : "";
+  if (!doctorType) {
+    return "Please select a doctor type.";
+  }
+  if (!ALLOWED_DOCTOR_TYPES.has(doctorType)) {
+    return "Please select a valid doctor type.";
   }
 
   const requiredFields = REQUEST_FORM_FIELDS.filter(
@@ -276,6 +303,24 @@ function validateFinalRequestSubmission(formData: FormData, data: JsonRecord) {
   }
   if (!String(data.current_photo_age ?? "").trim()) {
     return "Please enter the current age in the recent photo.";
+  }
+
+  const extras = Array.isArray(data.additional_reference_photos)
+    ? data.additional_reference_photos
+    : [];
+  if (extras.length > MAX_ADDITIONAL_REFERENCE_PHOTOS) {
+    return `You can add at most ${MAX_ADDITIONAL_REFERENCE_PHOTOS} optional reference photos (5 total including younger and current).`;
+  }
+  for (let i = 0; i < extras.length; i += 1) {
+    const row = extras[i];
+    if (!row || typeof row !== "object") {
+      return "Optional reference photos must include an age and image for each entry.";
+    }
+    const path = typeof row.path === "string" ? row.path.trim() : "";
+    const age = typeof row.age === "string" ? row.age.trim() : "";
+    if (!path || !age) {
+      return "Each optional reference photo needs an age and an image.";
+    }
   }
 
   return "";

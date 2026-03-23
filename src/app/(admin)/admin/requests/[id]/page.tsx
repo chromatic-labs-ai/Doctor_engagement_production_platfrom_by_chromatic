@@ -20,6 +20,7 @@ import {
 import { updateRequestStatusAction } from "@/lib/actions";
 import { STATUS_OPTIONS } from "@/lib/constants";
 import { StoryboardSlideWithUrl } from "@/lib/storyboard";
+import { parseAssetPathStrings } from "@/lib/additional-reference-photos";
 import { createClient } from "@/lib/supabase/server";
 import { SubmitButton } from "@/components/submit-button";
 import {
@@ -118,8 +119,7 @@ export default async function AdminRequestDetailPage({
     : (video?.video_url ?? null);
 
   const enrichedFormData: JsonRecord = { ...request.form_data };
-  const rawAssetPaths = request.form_data.asset_paths;
-  const assetPaths = Array.isArray(rawAssetPaths) ? rawAssetPaths : [];
+  const assetPaths = parseAssetPathStrings(request.form_data.asset_paths);
   const signedAssetUrlMap = new Map<string, string>();
   if (assetPaths.length > 0) {
     const signedAssetUrls: string[] = [];

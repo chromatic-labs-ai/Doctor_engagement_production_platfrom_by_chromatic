@@ -31,18 +31,19 @@ export function LoginForm({
       <CardHeader className="text-center sm:text-left">
         <CardTitle className="text-3xl">Login to your account</CardTitle>
         <CardDescription className="text-sm">
-          Enter your email and password to access the workspace.
+          Enter your username and password to access the workspace.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form action={action} className="grid gap-5">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
-              id="email"
+              id="username"
               name="email"
-              type="email"
-              placeholder="m@example.com"
+              type="text"
+              autoComplete="username"
+              placeholder="employeeid@companyname"
               required
             />
           </div>

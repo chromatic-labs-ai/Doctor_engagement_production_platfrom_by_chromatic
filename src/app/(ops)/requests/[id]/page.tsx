@@ -27,6 +27,10 @@ import { countDoctorReviewChanges, isDoctorReviewExpired } from "@/lib/doctor-re
 import {
   countDoctorStoryboardReviewFeedback,
 } from "@/lib/doctor-storyboard-review";
+import {
+  parseAdditionalReferencePhotos,
+  parseAssetPathStrings,
+} from "@/lib/additional-reference-photos";
 import { StoryboardSlideWithUrl } from "@/lib/storyboard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -144,8 +148,7 @@ export default async function OpsRequestDetailPage({
       ).data?.signedUrl ?? null
     : (video?.video_url ?? null);
 
-  const rawAssetPaths = request.form_data.asset_paths;
-  const assetPaths = Array.isArray(rawAssetPaths) ? rawAssetPaths : [];
+  const assetPaths = parseAssetPathStrings(request.form_data.asset_paths);
   const signedAssetUrls = new Map<string, string>();
   for (const path of assetPaths) {
     const { data } = await supabase.storage
@@ -179,8 +182,19 @@ export default async function OpsRequestDetailPage({
       key !== "asset_paths" &&
       key !== "young_photo_path" &&
       key !== "current_photo_path" &&
-      key !== "journey_audio_path",
+      key !== "journey_audio_path" &&
+      key !== "additional_reference_photos",
   );
+
+  const additionalReferencePhotos = parseAdditionalReferencePhotos(
+    request.form_data.additional_reference_photos,
+  );
+  const additionalReferenceLightboxItems = additionalReferencePhotos
+    .map((entry) => {
+      const url = signedAssetUrls.get(entry.path);
+      return url ? { url, label: `Reference photo (age ${entry.age})` } : null;
+    })
+    .filter((item): item is { url: string; label: string } => item !== null);
 
   const canComment =
     request.status === "storyboard_review" || request.status === "changes_requested";
@@ -413,7 +427,7 @@ export default async function OpsRequestDetailPage({
                       </span>
                     </div>
                   ))}
-                  {youngPhotoUrl || currentPhotoUrl ? (
+                  {youngPhotoUrl || currentPhotoUrl || additionalReferenceLightboxItems.length > 0 ? (
                     <>
                       <Separator />
                       <div className="grid gap-3">
@@ -428,6 +442,7 @@ export default async function OpsRequestDetailPage({
                             ...(currentPhotoUrl
                               ? [{ url: currentPhotoUrl, label: "Current Photo" }]
                               : []),
+                            ...additionalReferenceLightboxItems,
                           ]}
                         />
                       </div>
