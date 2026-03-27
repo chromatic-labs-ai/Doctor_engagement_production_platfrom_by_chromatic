@@ -332,6 +332,7 @@ export function NewRequestForm({
 
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const doctorType = String(formData.get("field_doctor_type") ?? "").trim();
     const youngPhoto = formData.get("young_photo");
     const currentPhoto = formData.get("current_photo");
     const journeyAudio = formData.get("journey_audio");
@@ -367,6 +368,16 @@ export function NewRequestForm({
     }
 
     if (intent === "final") {
+      if (!doctorType) {
+        setError("Please select a doctor type.");
+        setIsSubmitting(false);
+        setSubmitIntent(null);
+        formRef.current
+          ?.querySelector<HTMLSelectElement>('select[name="field_doctor_type"]')
+          ?.focus();
+        return;
+      }
+
       if (!youngPhotoAge) {
         setError("Please enter the age in the younger photo.");
         setIsSubmitting(false);
