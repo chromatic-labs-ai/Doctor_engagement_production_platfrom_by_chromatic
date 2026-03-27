@@ -161,12 +161,23 @@ export function NewRequestForm({
       ),
     [],
   );
+  const requiredActiveFields = useMemo(
+    () => activeFields.filter((field) => field.required),
+    [activeFields],
+  );
 
   const updateFieldValue = (key: string, value: string) => {
     setFormValues((current) => ({
       ...current,
       [key]: value,
     }));
+  };
+
+  const focusField = (name: string) => {
+    const field = formRef.current?.elements.namedItem(name);
+    if (field instanceof HTMLElement) {
+      field.focus();
+    }
   };
 
   useEffect(() => {
@@ -332,6 +343,7 @@ export function NewRequestForm({
 
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const doctorName = String(formData.get("doctor_name") ?? "").trim();
     const doctorType = String(formData.get("field_doctor_type") ?? "").trim();
     const youngPhoto = formData.get("young_photo");
     const currentPhoto = formData.get("current_photo");
@@ -341,6 +353,14 @@ export function NewRequestForm({
     const existingYoungPhotoPath = String(formData.get("existing_young_photo_path") ?? "").trim();
     const existingCurrentPhotoPath = String(formData.get("existing_current_photo_path") ?? "").trim();
     const existingJourneyAudioPath = String(formData.get("existing_journey_audio_path") ?? "").trim();
+
+    if (!doctorName) {
+      setError("Please enter the doctor's full name.");
+      setIsSubmitting(false);
+      setSubmitIntent(null);
+      focusField("doctor_name");
+      return;
+    }
 
     const hasNewYoungPhoto = youngPhoto instanceof File && youngPhoto.size > 0;
     const hasNewCurrentPhoto = currentPhoto instanceof File && currentPhoto.size > 0;
@@ -372,16 +392,26 @@ export function NewRequestForm({
         setError("Please select a doctor type.");
         setIsSubmitting(false);
         setSubmitIntent(null);
-        formRef.current
-          ?.querySelector<HTMLSelectElement>('select[name="field_doctor_type"]')
-          ?.focus();
+        focusField("field_doctor_type");
         return;
+      }
+
+      for (const field of requiredActiveFields) {
+        const value = String(formData.get(`field_${field.key}`) ?? "").trim();
+        if (!value) {
+          setError(`Please complete ${field.label}.`);
+          setIsSubmitting(false);
+          setSubmitIntent(null);
+          focusField(`field_${field.key}`);
+          return;
+        }
       }
 
       if (!youngPhotoAge) {
         setError("Please enter the age in the younger photo.");
         setIsSubmitting(false);
         setSubmitIntent(null);
+        focusField("field_young_photo_age");
         return;
       }
 
@@ -389,6 +419,7 @@ export function NewRequestForm({
         setError("Please enter the current age in the recent photo.");
         setIsSubmitting(false);
         setSubmitIntent(null);
+        focusField("field_current_photo_age");
         return;
       }
 
@@ -396,6 +427,7 @@ export function NewRequestForm({
         setError("Please upload a younger photo.");
         setIsSubmitting(false);
         setSubmitIntent(null);
+        focusField("young_photo");
         return;
       }
 
@@ -403,6 +435,7 @@ export function NewRequestForm({
         setError("Please upload a current photo.");
         setIsSubmitting(false);
         setSubmitIntent(null);
+        focusField("current_photo");
         return;
       }
 
